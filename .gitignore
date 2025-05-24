@@ -1,0 +1,27 @@
+
+```gitignore
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django stuff:
+
+
+# Environments
+.env
+.venv/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# VS Code and IDEs
+.idea/
+.vscode/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+db.sqlite3
