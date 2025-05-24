@@ -28,7 +28,14 @@ def buy_item(request, item_id):
             'quantity': 1,
         }],
         mode='payment',
-        success_url='https://example.com/success',
-        cancel_url='https://example.com/cancel',
+        success_url=f'{settings.DOMAIN}/success',
+        cancel_url=f'{settings.DOMAIN}/cancel',
     )
     return JsonResponse({'id': session.id})
+
+def success_view(request):
+    return render(request, 'store/success.html')
+
+def cancel_view(request):
+    return render(request, 'store/cancel.html')
+

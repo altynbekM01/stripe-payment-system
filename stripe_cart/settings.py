@@ -25,6 +25,7 @@ STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY')
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
+DOMAIN = os.getenv("DOMAIN", "http://localhost:8000")
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 
