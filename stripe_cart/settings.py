@@ -17,8 +17,11 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(os.path.join(BASE_DIR, '.env'))
 
-STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
-STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY')
+STRIPE_SECRET_KEY_USD = os.getenv('STRIPE_SECRET_KEY_USD')
+STRIPE_PUBLIC_KEY_USD = os.getenv('STRIPE_PUBLIC_KEY_USD')
+
+STRIPE_SECRET_KEY_EUR = os.getenv('STRIPE_SECRET_KEY_EUR')
+STRIPE_PUBLIC_KEY_EUR = os.getenv('STRIPE_PUBLIC_KEY_EUR')
 
 
 # Quick-start development settings - unsuitable for production
@@ -123,6 +126,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

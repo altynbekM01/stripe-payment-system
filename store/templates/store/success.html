@@ -1,12 +1,17 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Payment Successful</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Payment Successful</title>
+  <link rel="stylesheet" href="{% static 'store/css/transaction_status.css' %}">
 </head>
 <body>
+  <div class="container">
     <h1>Thank you for your purchase!</h1>
     <p>Your payment was successful.</p>
-    <a href="/">Return to home</a>
+    <a href="/" class="button">Return to Home</a>
+  </div>
 </body>
 </html>
