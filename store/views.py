@@ -76,7 +76,16 @@ def order_detail(request, order_id):
 @login_required
 def my_orders(request):
     orders = request.user.orders.all()
-    return render(request, 'store/my_orders2.html', {'orders': orders})
+    if orders.exists():
+        currency = orders.first().currency
+        _, public_key = get_stripe_keys(currency)
+    else:
+        public_key = ''
+
+    return render(request, 'store/my_orders.html', {
+        'orders': orders,
+        'public_key': public_key,
+    })
 
 @login_required
 def add_to_order(request, item_id):
@@ -92,18 +101,22 @@ def add_to_order(request, item_id):
     order.items.add(item)
     return redirect('/')
 
-@csrf_exempt
-def buy_order(request, order_id):
-    order = get_object_or_404(Order, id=order_id)
 
-    stripe_secret_key, _ = get_stripe_keys(order.currency)
+def buy_order(request, order_id):
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+
+    if not order.items.exists():
+        return JsonResponse({'error': 'Заказ пуст'}, status=400)
+
+    currency = order.currency
+    stripe_secret_key, _ = get_stripe_keys(currency)
     stripe.api_key = stripe_secret_key
 
     line_items = []
     for item in order.items.all():
         line_items.append({
             'price_data': {
-                'currency': order.currency.code,
+                'currency': item.currency.code,
                 'product_data': {
                     'name': item.name,
                 },
@@ -118,36 +131,7 @@ def buy_order(request, order_id):
         mode='payment',
         success_url=f'{settings.DOMAIN}/success',
         cancel_url=f'{settings.DOMAIN}/cancel',
+        metadata={'order_id': order.id}
     )
 
-    return JsonResponse({'id': session.id})
-
-@csrf_exempt  # временно для теста
-def buy_order2(request, order_id):
-    if request.method != 'POST':
-        return JsonResponse({'error': 'Invalid request'}, status=400)
-
-    order = get_object_or_404(Order, id=order_id)
-
-    stripe_secret_key, _ = get_stripe_keys(order.currency)
-    stripe.api_key = stripe_secret_key
-
-    line_items = [{
-        'price_data': {
-            'currency': order.currency.code,
-            'product_data': {
-                'name': item.name,
-            },
-            'unit_amount': int(item.price * 100),
-        },
-        'quantity': 1,
-    } for item in order.items.all()]
-
-    session = stripe.checkout.Session.create(
-        payment_method_types=['card'],
-        line_items=line_items,
-        mode='payment',
-        success_url=f'{settings.DOMAIN}/success',
-        cancel_url=f'{settings.DOMAIN}/cancel',
-    )
     return JsonResponse({'id': session.id})
