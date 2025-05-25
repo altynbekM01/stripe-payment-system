@@ -1,8 +1,13 @@
 import stripe
 from django.conf import settings
-from django.shortcuts import get_object_or_404, render
-from django.http import JsonResponse
-from .models import Item, Currency
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, render, redirect
+from django.http import JsonResponse, HttpResponseBadRequest
+from .models import Item, Currency, Order
+
+def index(request):
+    items = Item.objects.all()
+    return render(request, 'store/index.html', {'items': items})
 
 
 def get_stripe_keys(currency):
@@ -53,3 +58,34 @@ def success_view(request):
 def cancel_view(request):
     return render(request, 'store/cancel.html')
 
+
+def create_order(request):
+    # Пример: создаём заказ с валютой, переданной через GET ?currency=USD
+    currency_code = request.GET.get('currency', 'usd')
+    currency = get_object_or_404(Currency, code=currency_code)
+
+    order = Order.objects.create(currency=currency)
+    return redirect('order_detail', order_id=order.id)
+
+def order_detail(request, order_id):
+    order = get_object_or_404(Order, pk=order_id)
+    return render(request, 'store/order_detail.html', {'order': order})
+
+@login_required
+def my_orders(request):
+    orders = request.user.orders.all()
+    return render(request, 'store/my_orders.html', {'orders': orders})
+
+@login_required
+def add_to_order(request, item_id):
+    item = get_object_or_404(Item, id=item_id)
+    currency = item.currency
+
+    order, created = Order.objects.get_or_create(
+        user=request.user,
+        paid=False,
+        currency=currency,
+    )
+
+    order.items.add(item)
+    return redirect('/')

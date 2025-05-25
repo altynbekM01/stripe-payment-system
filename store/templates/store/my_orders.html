@@ -1,0 +1,15 @@
+<h1>My Orders</h1>
+{% for order in orders %}
+  <div>
+    <h3>Order #{{ order.id }} | {{ order.created_at }}</h3>
+    <p>Currency: {{ order.currency.code }}</p>
+    <ul>
+      {% for item in order.items.all %}
+        <li>{{ item.name }} – {{ item.price }}</li>
+      {% endfor %}
+    </ul>
+    <p>Total: {{ order.total_amount }}</p>
+  </div>
+{% empty %}
+  <p>You have no orders.</p>
+{% endfor %}
