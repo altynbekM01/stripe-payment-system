@@ -1,8 +1,11 @@
+<script src="https://js.stripe.com/v3/"></script>
+<meta charset="UTF-8" />
 <h1>My Orders</h1>
 {% for order in orders %}
   <div>
     <h3>Order #{{ order.id }} | {{ order.created_at }}</h3>
     <p>Currency: {{ order.currency.code }}</p>
+    <button class="pay-button" data-order-id="{{ order.id }}">Оплатить заказ</button>
     <ul>
       {% for item in order.items.all %}
         <li>{{ item.name }} – {{ item.price }}</li>
@@ -13,3 +16,34 @@
 {% empty %}
   <p>You have no orders.</p>
 {% endfor %}
+
+<script>
+  const stripe = Stripe("{{ stripe_public_key }}");
+
+  document.querySelectorAll('.pay-button').forEach(button => {
+    button.addEventListener('click', () => {
+      const orderId = button.getAttribute('data-order-id');
+
+      fetch(`/orders/${orderId}/buy/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': '{{ csrf_token }}',
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        return stripe.redirectToCheckout({ sessionId: data.id });
+      })
+      .then(result => {
+        if (result.error) {
+          alert(result.error.message);
+        }
+      })
+      .catch(console.error);
+    });
+  });
+</script>
+
+
+

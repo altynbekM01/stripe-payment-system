@@ -1,0 +1,45 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ item.name }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="{% static 'store/css/item_styles.css' %}" rel="stylesheet">
+</head>
+<body>
+ <h1>My Orders</h1>
+{% for order in orders %}
+<div>
+    <h3>Order #{{ order.id }} | {{ order.created_at }}</h3>
+    <p>Currency: {{ order.currency.code }}</p>
+    <button className="pay-button" data-order-id="{{ order.id }}" id="order-buy-button">Оплатить заказ</button>
+    <ul>
+        {% for item in order.items.all %}
+        <li>{{ item.name }} – {{ item.price }}</li>
+        {% endfor %}
+    </ul>
+    <p>Total: {{ order.total_amount }}</p>
+</div>
+{% empty %}
+<p>You have no orders.</p>
+{% endfor %}
+
+  <script src="https://js.stripe.com/v3/"></script>
+  <script>
+    var stripe = Stripe("{{ stripe_public_key }}");
+    var buyButton = document.getElementById("order-buy-button");
+
+    buyButton.addEventListener("click", function () {
+      fetch(`/orders/{{order.id}}/buy/`)
+        .then(response => response.json())
+        .then(data => stripe.redirectToCheckout({sessionId: data.id}));
+    });
+  </script>
+</body>
+</html>
+
+
+
+
+

@@ -2,6 +2,10 @@
 
 {% block content %}
   <h1>Товары</h1>
+  <a href="{% url 'my_orders' %}">
+    <button type="button">Перейти в корзину</button>
+  </a>
+
   <ul>
     {% for item in items %}
       <li>
