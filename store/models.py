@@ -53,6 +53,8 @@ class Order(models.Model):
     paid = models.BooleanField(default=False)
     items = models.ManyToManyField(Item)
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
+    discount = models.ForeignKey(Discount, null=True, blank=True, on_delete=models.SET_NULL)
+    tax = models.ForeignKey(Tax, null=True, blank=True, on_delete=models.SET_NULL)
 
     def total_amount(self):
         return sum(item.price for item in self.items.all())

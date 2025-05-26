@@ -5,7 +5,9 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 
-from .models import Item, Currency, Order
+from .forms import PromoCodeForm
+from .models import Item, Currency, Order, Discount
+
 
 def index(request):
     items = Item.objects.all()
@@ -128,6 +130,7 @@ def buy_order(request, order_id):
     session = stripe.checkout.Session.create(
         payment_method_types=['card'],
         line_items=line_items,
+        discounts=[{'coupon': order.discount.stripe_coupon_id}] if order.discount else [],
         mode='payment',
         success_url=f'{settings.DOMAIN}/success',
         cancel_url=f'{settings.DOMAIN}/cancel',
@@ -135,3 +138,28 @@ def buy_order(request, order_id):
     )
 
     return JsonResponse({'id': session.id})
+
+
+def apply_coupon_view(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    message = ""
+
+    if request.method == "POST":
+        form = PromoCodeForm(request.POST)
+        if form.is_valid():
+            code = form.cleaned_data['code']
+            try:
+                discount = Discount.objects.get(name=code)
+                order.discount = discount
+                order.save()
+                message = f"Скидка '{discount.name}' успешно применена!"
+            except Discount.DoesNotExist:
+                message = "Промокод не найден."
+    else:
+        form = PromoCodeForm()
+
+    return render(request, 'store/apply_coupon.html', {
+        'order': order,
+        'form': form,
+        'message': message,
+    })

@@ -12,16 +12,21 @@
   <div>
     <h3>Order #{{ order.id }} | {{ order.created_at }}</h3>
     <p>Currency: {{ order.currency.code }}</p>
-    <button onclick="buyOrder({{ order.id }})">Оплатить заказ</button>
     <ul>
       {% for item in order.items.all %}
         <li>{{ item.name }} – {{ item.price }}</li>
       {% endfor %}
     </ul>
     <p>Total: {{ order.total_amount }}</p>
+
+    <form action="{% url 'apply-coupon' order.id %}" method="post">
+      {% csrf_token %}
+      <input type="text" name="code" placeholder="Введите промокод">
+      <button type="submit">Применить</button>
+    </form>
+
+    <button onclick="buyOrder({{ order.id }})">Оплатить заказ</button>
   </div>
-{% empty %}
-  <p>You have no orders.</p>
 {% endfor %}
 
 <script>
@@ -41,6 +46,39 @@
         console.error("Ошибка при создании сессии:", error);
         alert("Произошла ошибка");
       });
+  }
+
+  function applyCoupon(event, orderId) {
+    event.preventDefault();
+    const input = document.getElementById(`coupon-code-${orderId}`);
+    const message = document.getElementById(`coupon-message-${orderId}`);
+    const total = document.getElementById(`total-amount-${orderId}`);
+    const code = input.value;
+
+    fetch(`/orders/${orderId}/apply-coupon/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}' // для Django CSRF защиты
+      },
+      body: JSON.stringify({ coupon: code })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        message.style.color = 'green';
+        message.textContent = 'Промокод применён! Новый итог: ' + data.new_total;
+        total.textContent = data.new_total;
+      } else {
+        message.style.color = 'red';
+        message.textContent = data.error || 'Ошибка применения промокода';
+      }
+    })
+    .catch(error => {
+      message.style.color = 'red';
+      message.textContent = 'Ошибка при отправке запроса';
+      console.error(error);
+    });
   }
 </script>
 
