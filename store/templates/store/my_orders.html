@@ -19,11 +19,10 @@
     </ul>
     <p>Total: {{ order.total_amount }}</p>
 
-    <form action="{% url 'apply-coupon' order.id %}" method="post">
-      {% csrf_token %}
-      <input type="text" name="code" placeholder="Введите промокод">
-      <button type="submit">Применить</button>
-    </form>
+    <input type="text" id="coupon-code-{{ order.id }}" placeholder="Введите промокод">
+    <button onclick="applyCoupon(event, {{ order.id }})">Применить</button>
+    <p id="coupon-message-{{ order.id }}"></p>
+    <p>Итог: <span id="total-amount-{{ order.id }}">{{ order.total_amount }}</span></p>
 
     <button onclick="buyOrder({{ order.id }})">Оплатить заказ</button>
   </div>
@@ -48,35 +47,51 @@
       });
   }
 
+   function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        cookie = cookie.trim();
+        if (cookie.startsWith(name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
   function applyCoupon(event, orderId) {
     event.preventDefault();
-    const input = document.getElementById(`coupon-code-${orderId}`);
+    const codeInput = document.getElementById(`coupon-code-${orderId}`);
     const message = document.getElementById(`coupon-message-${orderId}`);
     const total = document.getElementById(`total-amount-${orderId}`);
-    const code = input.value;
+
+    const code = codeInput.value;
 
     fetch(`/orders/${orderId}/apply-coupon/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-CSRFToken': '{{ csrf_token }}' // для Django CSRF защиты
+        'X-CSRFToken': getCookie('csrftoken')
       },
-      body: JSON.stringify({ coupon: code })
+      body: JSON.stringify({ code: code })
     })
     .then(response => response.json())
     .then(data => {
       if (data.success) {
         message.style.color = 'green';
-        message.textContent = 'Промокод применён! Новый итог: ' + data.new_total;
+        message.textContent = 'Промокод применён!';
         total.textContent = data.new_total;
       } else {
         message.style.color = 'red';
-        message.textContent = data.error || 'Ошибка применения промокода';
+        message.textContent = data.error || 'Промокод не применён';
       }
     })
     .catch(error => {
       message.style.color = 'red';
-      message.textContent = 'Ошибка при отправке запроса';
+      message.textContent = 'Ошибка при применении';
       console.error(error);
     });
   }

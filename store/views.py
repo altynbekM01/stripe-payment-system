@@ -1,3 +1,5 @@
+import json
+
 import stripe
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -64,7 +66,6 @@ def cancel_view(request):
 
 
 def create_order(request):
-    # Пример: создаём заказ с валютой, переданной через GET ?currency=USD
     currency_code = request.GET.get('currency', 'usd')
     currency = get_object_or_404(Currency, code=currency_code)
 
@@ -125,6 +126,7 @@ def buy_order(request, order_id):
                 'unit_amount': int(item.price * 100),
             },
             'quantity': 1,
+            'tax_rates': ['txr_1RT5PHPKlgc9fEydJsQsZN4x'],
         })
 
     session = stripe.checkout.Session.create(
@@ -140,26 +142,29 @@ def buy_order(request, order_id):
     return JsonResponse({'id': session.id})
 
 
+@csrf_exempt
 def apply_coupon_view(request, order_id):
-    order = get_object_or_404(Order, id=order_id)
-    message = ""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            code = data.get('code')
+            order = Order.objects.get(id=order_id)
 
-    if request.method == "POST":
-        form = PromoCodeForm(request.POST)
-        if form.is_valid():
-            code = form.cleaned_data['code']
-            try:
-                discount = Discount.objects.get(name=code)
-                order.discount = discount
-                order.save()
-                message = f"Скидка '{discount.name}' успешно применена!"
-            except Discount.DoesNotExist:
-                message = "Промокод не найден."
-    else:
-        form = PromoCodeForm()
+            discount = Discount.objects.get(name=code)
+            order.discount = discount
+            order.save()
+            total = order.total_amount()
+            if discount.percent_off:
+                new_total = total * (1 - discount.percent_off / 100)
+            elif discount.amount_off:
+                new_total = max(total - discount.amount_off, 0)
+            else:
+                new_total = total
 
-    return render(request, 'store/apply_coupon.html', {
-        'order': order,
-        'form': form,
-        'message': message,
-    })
+            return JsonResponse({'success': True, 'new_total': float(round(new_total, 2))})
+        except Discount.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Неверный промокод'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+    return JsonResponse({'success': False, 'error': 'Неверный метод запроса'})

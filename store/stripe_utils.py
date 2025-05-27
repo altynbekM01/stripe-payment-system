@@ -1,6 +1,4 @@
 import stripe
-import os
-from dotenv import load_dotenv
 from store.models import Discount, Tax
 from stripe_cart import settings
 
@@ -17,7 +15,7 @@ def get_or_create_tax_and_save(name, percentage, inclusive=False):
             display_name=name,
             percentage=percentage,
             inclusive=inclusive,
-            country="US",  # укажи нужное
+            country="US",
             jurisdiction="US",
             description=f"{percentage}% Tax"
         )
