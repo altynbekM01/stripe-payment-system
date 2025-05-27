@@ -1,10 +1,10 @@
+{% extends "store/base.html" %}
 
+{% block title %}Товары{% endblock %}
 
 {% block content %}
   <h1>Товары</h1>
-  <a href="{% url 'my_orders' %}">
-    <button type="button">Перейти в корзину</button>
-  </a>
+  <a href="{% url 'my_orders' %}" class="button">Перейти в корзину</a>
 
   <ul>
     {% for item in items %}

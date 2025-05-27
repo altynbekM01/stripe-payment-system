@@ -1,101 +1,96 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>My Orders</title>
+{% extends "store/base.html" %}
+
+{% block title %}Мои заказы{% endblock %}
+
+{% block content %}
+  <h1>Мои заказы</h1>
+
+  {% for order in orders %}
+    <div>
+      <h3>Заказ #{{ order.id }} | {{ order.created_at }}</h3>
+      <p>Валюта: {{ order.currency.code }}</p>
+      <ul>
+        {% for item in order.items.all %}
+          <li>{{ item.name }} – {{ item.price }}</li>
+        {% endfor %}
+      </ul>
+      <p>Сумма: {{ order.total_amount }}</p>
+
+      <input type="text" id="coupon-code-{{ order.id }}" placeholder="Введите промокод">
+      <button onclick="applyCoupon(event, {{ order.id }})">Применить</button>
+      <p id="coupon-message-{{ order.id }}"></p>
+      <p>Итог: <span id="total-amount-{{ order.id }}">{{ order.total_amount }}</span></p>
+
+      <button onclick="buyOrder({{ order.id }})">Оплатить заказ</button>
+    </div>
+  {% endfor %}
+
   <script src="https://js.stripe.com/v3/"></script>
-</head>
-<body>
+  <script>
+    const stripe = Stripe("{{ public_key }}");
 
-<h1>My Orders</h1>
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+          cookie = cookie.trim();
+          if (cookie.startsWith(name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
 
-{% for order in orders %}
-  <div>
-    <h3>Order #{{ order.id }} | {{ order.created_at }}</h3>
-    <p>Currency: {{ order.currency.code }}</p>
-    <ul>
-      {% for item in order.items.all %}
-        <li>{{ item.name }} – {{ item.price }}</li>
-      {% endfor %}
-    </ul>
-    <p>Total: {{ order.total_amount }}</p>
+    function buyOrder(orderId) {
+      fetch(`/orders/${orderId}/buy/`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.id) {
+            stripe.redirectToCheckout({ sessionId: data.id });
+          } else {
+            alert("Ошибка: " + (data.error || "Не удалось создать сессию"));
+          }
+        })
+        .catch(error => {
+          console.error("Ошибка при создании сессии:", error);
+          alert("Произошла ошибка");
+        });
+    }
 
-    <input type="text" id="coupon-code-{{ order.id }}" placeholder="Введите промокод">
-    <button onclick="applyCoupon(event, {{ order.id }})">Применить</button>
-    <p id="coupon-message-{{ order.id }}"></p>
-    <p>Итог: <span id="total-amount-{{ order.id }}">{{ order.total_amount }}</span></p>
+    function applyCoupon(event, orderId) {
+      event.preventDefault();
+      const codeInput = document.getElementById(`coupon-code-${orderId}`);
+      const message = document.getElementById(`coupon-message-${orderId}`);
+      const total = document.getElementById(`total-amount-${orderId}`);
+      const code = codeInput.value;
 
-    <button onclick="buyOrder({{ order.id }})">Оплатить заказ</button>
-  </div>
-{% endfor %}
-
-<script>
-  const stripe = Stripe("{{ public_key }}");
-
-  function buyOrder(orderId) {
-    fetch(`/orders/${orderId}/buy/`)
+      fetch(`/orders/${orderId}/apply-coupon/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ code: code })
+      })
       .then(response => response.json())
       .then(data => {
-        if (data.id) {
-          stripe.redirectToCheckout({ sessionId: data.id });
+        if (data.success) {
+          message.style.color = 'green';
+          message.textContent = 'Промокод применён!';
+          total.textContent = data.new_total;
         } else {
-          alert("Ошибка: " + (data.error || "Не удалось создать сессию"));
+          message.style.color = 'red';
+          message.textContent = data.error || 'Промокод не применён';
         }
       })
       .catch(error => {
-        console.error("Ошибка при создании сессии:", error);
-        alert("Произошла ошибка");
-      });
-  }
-
-   function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
-      for (let cookie of cookies) {
-        cookie = cookie.trim();
-        if (cookie.startsWith(name + '=')) {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
-        }
-      }
-    }
-    return cookieValue;
-  }
-
-  function applyCoupon(event, orderId) {
-    event.preventDefault();
-    const codeInput = document.getElementById(`coupon-code-${orderId}`);
-    const message = document.getElementById(`coupon-message-${orderId}`);
-    const total = document.getElementById(`total-amount-${orderId}`);
-
-    const code = codeInput.value;
-
-    fetch(`/orders/${orderId}/apply-coupon/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': getCookie('csrftoken')
-      },
-      body: JSON.stringify({ code: code })
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        message.style.color = 'green';
-        message.textContent = 'Промокод применён!';
-        total.textContent = data.new_total;
-      } else {
         message.style.color = 'red';
-        message.textContent = data.error || 'Промокод не применён';
-      }
-    })
-    .catch(error => {
-      message.style.color = 'red';
-      message.textContent = 'Ошибка при применении';
-      console.error(error);
-    });
-  }
-</script>
-
-</body>
-</html>
+        message.textContent = 'Ошибка при применении';
+        console.error(error);
+      });
+    }
+  </script>
+{% endblock %}

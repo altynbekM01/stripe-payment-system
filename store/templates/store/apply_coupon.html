@@ -1,9 +1,0 @@
-<h2>Заказ #{{ order.id }}</h2>
-
-<form method="post">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">Применить промокод</button>
-</form>
-
-<p style="color: green">{{ message }}</p>

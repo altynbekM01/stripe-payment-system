@@ -1,11 +1,18 @@
-<h1>Заказ №{{ order.id }} ({{ order.currency.code }})</h1>
-<p>Дата: {{ order.created_at }}</p>
-<p>Оплачен: {{ order.paid }}</p>
-<h2>Товары:</h2>
-<ul>
-  {% for item in order.items.all %}
-    <li>{{ item.name }} — {{ item.price }} {{ item.currency.code }}</li>
-  {% empty %}
-    <li>Товаров нет</li>
-  {% endfor %}
-</ul>
+{% extends "store/base.html" %}
+
+{% block title %}Заказ №{{ order.id }}{% endblock %}
+
+{% block content %}
+  <h1>Заказ №{{ order.id }} ({{ order.currency.code }})</h1>
+  <p>Дата: {{ order.created_at }}</p>
+  <p>Оплачен: {{ order.paid }}</p>
+
+  <h2>Товары:</h2>
+  <ul>
+    {% for item in order.items.all %}
+      <li>{{ item.name }} — {{ item.price }} {{ item.currency.code }}</li>
+    {% empty %}
+      <li>Товаров нет</li>
+    {% endfor %}
+  </ul>
+{% endblock %}
