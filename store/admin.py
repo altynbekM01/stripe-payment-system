@@ -2,7 +2,19 @@ from django.contrib import admin
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import Item, Currency, Order, CustomUser
+from .models import Item, Currency, Order, CustomUser, Discount, Tax
+
+
+@admin.register(Discount)
+class DiscountAdmin(admin.ModelAdmin):
+    list_display = ('name', 'stripe_coupon_id', 'percent_off', 'amount_off')
+    search_fields = ('name', 'stripe_coupon_id')
+
+
+@admin.register(Tax)
+class TaxAdmin(admin.ModelAdmin):
+    list_display = ('name', 'stripe_tax_rate_id', 'percentage')
+    search_fields = ('name', 'stripe_tax_rate_id')
 
 
 @admin.register(Currency)
@@ -29,7 +41,7 @@ class OrderItemInline(admin.TabularInline):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'created_at', 'paid')
+    list_display = ('id', 'user', 'created_at', 'paid',  'discount', 'tax')
     inlines = [OrderItemInline]
     readonly_fields = ('created_at', 'paid')
     exclude = ('items',)
