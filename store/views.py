@@ -63,13 +63,7 @@ def cancel_view(request):
     return render(request, 'store/cancel.html')
 
 
-def create_order(request):
-    currency_code = request.GET.get('currency', 'usd')
-    currency = get_object_or_404(Currency, code=currency_code)
-
-    order = Order.objects.create(currency=currency)
-    return redirect('order_detail', order_id=order.id)
-
+@login_required
 def order_detail(request, order_id):
     order = get_object_or_404(Order, pk=order_id)
     return render(request, 'store/order_detail.html', {'order': order})
@@ -102,7 +96,7 @@ def add_to_order(request, item_id):
     order.items.add(item)
     return redirect('/')
 
-
+@login_required
 def buy_order(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
 
