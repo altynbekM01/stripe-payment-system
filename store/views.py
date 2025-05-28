@@ -6,8 +6,6 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render, redirect
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
-
-from .forms import PromoCodeForm
 from .models import Item, Currency, Order, Discount
 
 

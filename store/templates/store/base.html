@@ -11,9 +11,19 @@
  <header>
   <nav class="navbar">
      <a href="/">Товары</a>
-    <a href="/orders/">Корзина заказов</a>
+     <a href="/orders/">Корзина заказов</a>
+       <div class="navbar-right">
+      {% if user.is_authenticated %}
+        <form method="post" action="{% url 'logout' %}">
+          {% csrf_token %}
+          <button type="submit" class="logout-button">Выйти</button>
+        </form>
+      {% else %}
+        <a href="{% url 'login' %}" class="login-link">Войти</a>
+      {% endif %}
+       </div>
   </nav>
-</header>
+ </header>
 
   <main class="container">
     {% block content %}{% endblock %}
