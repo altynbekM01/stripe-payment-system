@@ -15,4 +15,4 @@ RUN pip install --upgrade pip \
 
 COPY . .
 
-CMD ["sh", "-c", "python manage.py migrate && gunicorn projectname.wsgi:application --bind 0.0.0.0:8000"]
+CMD ["sh", "-c", "python manage.py migrate && gunicorn stripe_cart.wsgi:application --bind 0.0.0.0:8000"]
