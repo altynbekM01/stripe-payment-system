@@ -18,7 +18,7 @@ def create_superuser(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('auth', '0003_order_discount_order_tax'),  # проверь актуальную версию в твоём проекте
+        ('store', '0003_order_discount_order_tax'),  # проверь актуальную версию в твоём проекте
     ]
 
     operations = [
