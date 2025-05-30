@@ -20,6 +20,4 @@ urlpatterns = [
 
     path('orders/<int:order_id>/buy/', views.buy_order, name='buy_order'),
     path('orders/<int:order_id>/apply-coupon/', views.apply_coupon_view, name='apply-coupon'),
-    
-    path('create-admin/', views.create_admin)
 ]
