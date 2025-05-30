@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 from .models import Item, Currency, Order, Discount
+from django.contrib.auth.models import User
 
 
 def index(request):
@@ -160,3 +161,9 @@ def apply_coupon_view(request, order_id):
             return JsonResponse({'success': False, 'error': str(e)})
 
     return JsonResponse({'success': False, 'error': 'Неверный метод запроса'})
+
+def create_admin(request):
+    if not User.objects.filter(username='admin').exists():
+        User.objects.create_superuser('admin', 'admin@example.com', 'adminpass1249')
+        return HttpResponse("Admin created")
+    return HttpResponse("Admin already exists")
